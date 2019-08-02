@@ -20,7 +20,7 @@ public class UnicessingCurves : UGraphics
         float width = 100.0f;
         float s = width / 3 + width / 3 * sin(t);
         float r = width / 100;
-        stroke(20 + (int)(cos(t * 1.5f) * 20), 20 + (int)(sin(t) * 20), 200, 255);
+        stroke(20 + (int)(cos(t * 1.5f) * 20), 20 + (int)(sin(t) * 20), 0, 255);
         beginShape(UShape.VertexType.CURVE_LINE_STRIP);
         for (int i = 0; i < 100; i++)
         {
