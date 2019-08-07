@@ -6,45 +6,41 @@ using UnityEngine;
 public class LRWave : MonoBehaviour
 {
     [Serializable]
-    public struct Harmonic
+    public class Harmonic
     {
         public float Amp;
         public float Lambda;
         public float Speed;
+
+        /// <summary>
+        /// Radian increment
+        /// </summary>
+        public float DeltaRadian
+        {
+            get;set;
+        }
+        public float PhaseShift
+        {
+            get;set;
+        }
     }
 
     [Range(0f,4096f)]
     [SerializeField]
     private int samples = 1024;
-
     [SerializeField]
     private float length = 25;
-    private float increment
-    {
-        get
-        {
-            return length / samples;
-        }
-    }
-       
-    //dx == xSpacing in radian
-    private float dx
-    {
-        get { return Mathf.PI * 2 * (increment / lambda); }
-    }
-    private float theta = 0f;
+
+    /// <summary>
+    /// Domain dimension spacing
+    /// </summary>
+    private static float DomainIncrement;
+    private float timeShift = 0f;
 
     [SerializeField]
     private Harmonic[] harmonics;
+    private Vector3[] superpositionPoints;
 
-    [SerializeField]
-    private float amp = 25f;
-    [SerializeField]
-    private float lambda;
-    [SerializeField]
-    private float speed = 1;
-
-    private Vector3[] samplePts;
     [SerializeField]
     private LineRenderer line;
 
@@ -55,7 +51,7 @@ public class LRWave : MonoBehaviour
             line = GetComponent<LineRenderer>();
         }
 
-        samplePts = new Vector3[samples];
+        //superpositionPoints = new List<Vector3>(samples);
     }
     
 
@@ -72,21 +68,45 @@ public class LRWave : MonoBehaviour
 
     private void CalcPoints()
     {
-        //Increment theta
-        theta += (Time.deltaTime * speed);
-        theta %= (2 * Mathf.PI);
+        superpositionPoints = new Vector3[samples];
+        DomainIncrement = length / samples;
 
-        float x = theta;
-        for (int i = 0; i < samplePts.Length; i++)
+        foreach (var harmonic in harmonics)
         {
-            samplePts[i] = new Vector3(i*increment, Mathf.Sin(x) * amp);
-            x += dx;
+            harmonic.DeltaRadian = harmonic.Lambda == 0 ? float.NaN : Mathf.PI * 2 * (DomainIncrement / harmonic.Lambda);
+            if (harmonic.Lambda != 0)
+            {
+                harmonic.PhaseShift += Time.deltaTime * harmonic.Speed / harmonic.Lambda;
+            }
+            harmonic.PhaseShift %= (2 * Mathf.PI);
         }
+
+        //Increment theta with time
+        //timeShift += (Time.deltaTime * speed);
+        //timeShift %= (2 * Mathf.PI);
+
+        //float x = timeShift;
+
+        for (int i = 0; i < superpositionPoints.Length; i++)
+        {
+            float superposedValue = 0;
+            foreach (var component in harmonics)
+            {
+                if ( !float.IsNaN(component.DeltaRadian))
+                {
+                    superposedValue += Mathf.Sin(i * component.DeltaRadian + component.PhaseShift) * component.Amp;
+                }
+            }
+
+            superpositionPoints[i] = new Vector3(i * DomainIncrement, superposedValue);
+        }
+
+
     }
 
     private void RenderWave()
     {
         line.positionCount = samples;
-        line.SetPositions(samplePts);
+        line.SetPositions(superpositionPoints);
     }
 }
