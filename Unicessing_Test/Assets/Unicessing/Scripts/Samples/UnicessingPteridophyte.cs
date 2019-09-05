@@ -13,7 +13,7 @@ public class UnicessingPteridophyte : UGraphics
 
     protected override void Draw ()
     {
-        float t = modulo(frameSec * 0.3f, 3.0f);
+        float t = modulo(frameSec * 0.5f, 5.0f);
         if (t > 2) t = 3 - t;
         else if (t > 1) t = 1;
         else
